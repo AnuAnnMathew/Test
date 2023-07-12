@@ -3,7 +3,6 @@ package com.project.ann
 import android.content.ContentValues.TAG
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,31 +13,35 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import com.google.gson.Gson
 import com.project.ann.model.ResponseModel
-import com.project.ann.ui.theme.AnnTheme
+import org.json.JSONException
+import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+
+var newList: List<String> = mutableListOf()
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
-            AnnTheme {
+            MaterialTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
-
-                    val newList: List<String> = fetchData()
-                    GreetingPreview(newList)
+                    fetchData()
                 }
             }
         }
     }
 
-    private fun fetchData(): List<String> {
-        var responseList: List<String> = listOf()
+    private fun fetchData() {
         val response = ServiceBuilder.buildService(RacingApiService::class.java)
 
         response.getNextRaces("nextraces", 5).enqueue(object : Callback<ResponseModel> {
@@ -46,32 +49,37 @@ class MainActivity : ComponentActivity() {
                 call: Call<ResponseModel>, response: Response<ResponseModel>,
             ) {
                 Log.d(TAG, "onResponse: " + response.body().toString())
-                val res: ResponseModel = response.body()!!
-                responseList = res.data.next_to_go_ids
-                Log.d(TAG, "onResponse: $res")
+                newList = response.body()?.data?.next_to_go_ids ?: emptyList()
+
+                setContent {
+                    GreetingPreview()
+                }
+
+                try {
+                    val jsonObject = JSONObject(Gson().toJson(response.body()))
+                    Log.d(TAG, "onResponse: $jsonObject")
+
+                    val msg = jsonObject.getString("data")
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
 
             }
 
             override fun onFailure(call: Call<ResponseModel>, t: Throwable) {
-                Toast.makeText(applicationContext, t.toString(), Toast.LENGTH_LONG).show()
+                Log.d(TAG, "onFailure: ")
             }
-
         })
-
-        return responseList
     }
 }
 
-//@Preview(showBackground = true)
+@Preview(showBackground = true)
 @Composable
-fun GreetingPreview(newList: List<String>) {
-    ListExample(items = newList)
-}
+fun GreetingPreview() {
 
-@Composable
-fun ListExample(items: List<String>) {
     LazyColumn {
-        items(items) { item ->
+        items(newList) { item ->
             Text(text = item)
         }
     }
