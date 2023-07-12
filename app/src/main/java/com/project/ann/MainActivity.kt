@@ -5,15 +5,21 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
@@ -69,7 +75,8 @@ class MainActivity : ComponentActivity() {
 
                     if (obj != null) {
                         val gson = Gson()
-                        val mMineUserEntity = gson.fromJson(obj, Fff0c3eb64db493ce9dc65971714a::class.java)
+                        val mMineUserEntity =
+                            gson.fromJson(obj, Fff0c3eb64db493ce9dc65971714a::class.java)
                         raceSum.add(mMineUserEntity)
                     }
                 }
@@ -101,9 +108,22 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun GreetingPreview() {
 
-    LazyColumn {
+    LazyColumn(modifier = Modifier.padding(16.dp)) {
         items(raceSum) { item ->
-            Text(text = item.race_name)
+            ItemDesign(item)
         }
+    }
+}
+
+@Composable
+fun ItemDesign(race: Fff0c3eb64db493ce9dc65971714a) {
+
+    Column {
+        Text(
+            text = race.race_name, fontSize = 20.sp, fontWeight = FontWeight.Bold
+        )
+        Text(text = race.advertised_start.seconds.toString())
+        Divider()
+
     }
 }
