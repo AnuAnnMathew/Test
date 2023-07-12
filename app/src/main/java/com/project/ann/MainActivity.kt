@@ -15,7 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.google.gson.Gson
-import com.project.ann.model.ResponseModel
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import com.project.ann.model.Fff0c3eb64db493ce9dc65971714a
 import org.json.JSONException
 import org.json.JSONObject
 import retrofit2.Call
@@ -23,7 +25,8 @@ import retrofit2.Callback
 import retrofit2.Response
 
 
-var newList: List<String> = mutableListOf()
+var newList: MutableList<String> = mutableListOf()
+var raceSum: MutableList<Fff0c3eb64db493ce9dc65971714a> = mutableListOf()
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,12 +47,32 @@ class MainActivity : ComponentActivity() {
     private fun fetchData() {
         val response = ServiceBuilder.buildService(RacingApiService::class.java)
 
-        response.getNextRaces("nextraces", 5).enqueue(object : Callback<ResponseModel> {
+        response.getNextRaces("nextraces", 5).enqueue(object : Callback<JsonObject> {
             override fun onResponse(
-                call: Call<ResponseModel>, response: Response<ResponseModel>,
+                call: Call<JsonObject>, response: Response<JsonObject>,
             ) {
                 Log.d(TAG, "onResponse: " + response.body().toString())
-                newList = response.body()?.data?.next_to_go_ids ?: emptyList()
+
+                val jsonObject = response.body()
+                val data: JsonObject? = jsonObject?.getAsJsonObject("data")
+                val nestedArray: JsonArray? = data?.getAsJsonArray("next_to_go_ids")
+
+                if (nestedArray != null) {
+                    for (jsonElement in nestedArray) {
+                        newList.add(jsonElement.asString)
+                    }
+                }
+
+                for (race_id in newList) {
+                    val raceSummaries: JsonObject? = data?.getAsJsonObject("race_summaries")
+                    val obj: JsonObject? = raceSummaries?.getAsJsonObject(race_id)
+
+                    if (obj != null) {
+                        val gson = Gson()
+                        val mMineUserEntity = gson.fromJson(obj, Fff0c3eb64db493ce9dc65971714a::class.java)
+                        raceSum.add(mMineUserEntity)
+                    }
+                }
 
                 setContent {
                     GreetingPreview()
@@ -67,7 +90,7 @@ class MainActivity : ComponentActivity() {
 
             }
 
-            override fun onFailure(call: Call<ResponseModel>, t: Throwable) {
+            override fun onFailure(call: Call<JsonObject>, t: Throwable) {
                 Log.d(TAG, "onFailure: ")
             }
         })
@@ -79,8 +102,8 @@ class MainActivity : ComponentActivity() {
 fun GreetingPreview() {
 
     LazyColumn {
-        items(newList) { item ->
-            Text(text = item)
+        items(raceSum) { item ->
+            Text(text = item.race_name)
         }
     }
 }
