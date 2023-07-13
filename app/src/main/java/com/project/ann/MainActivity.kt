@@ -27,13 +27,13 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.project.ann.model.Fff0c3eb64db493ce9dc65971714a
-import org.json.JSONException
-import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.text.SimpleDateFormat
 import java.time.Duration
 import java.time.Instant
+import java.util.Locale
 
 
 var newList: MutableList<String> = mutableListOf()
@@ -56,12 +56,14 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun fetchData() {
+
         val response = ServiceBuilder.buildService(RacingApiService::class.java)
 
-        response.getNextRaces("nextraces", 5).enqueue(object : Callback<JsonObject> {
+        response.getNextRaces("nextraces", 10).enqueue(object : Callback<JsonObject> {
             override fun onResponse(
                 call: Call<JsonObject>, response: Response<JsonObject>,
             ) {
+
                 Log.d(TAG, "onResponse: " + response.body().toString())
 
                 val jsonObject = response.body()
@@ -69,10 +71,13 @@ class MainActivity : ComponentActivity() {
                 val nestedArray: JsonArray? = data?.getAsJsonArray("next_to_go_ids")
 
                 if (nestedArray != null) {
+                    newList = mutableListOf()
                     for (jsonElement in nestedArray) {
                         newList.add(jsonElement.asString)
                     }
                 }
+
+                raceSum = mutableListOf()
 
                 for (race_id in newList) {
                     val raceSummaries: JsonObject? = data?.getAsJsonObject("race_summaries")
@@ -84,21 +89,12 @@ class MainActivity : ComponentActivity() {
                             gson.fromJson(obj, Fff0c3eb64db493ce9dc65971714a::class.java)
                         raceSum.add(mMineUserEntity)
                     }
+
                 }
 
                 setContent {
                     GreetingPreview()
                 }
-
-                try {
-                    val jsonObject = JSONObject(Gson().toJson(response.body()))
-                    Log.d(TAG, "onResponse: $jsonObject")
-
-                    val msg = jsonObject.getString("data")
-                } catch (e: JSONException) {
-                    e.printStackTrace()
-                }
-
 
             }
 
@@ -113,13 +109,29 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun GreetingPreview() {
 
-    LazyColumn(modifier = Modifier.padding(16.dp)) {
-        items(raceSum) { item ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                ItemDesign(item)
+    Column(modifier = Modifier.padding(16.dp)) {
+
+        Text(text = "Next to go Races", fontSize = 24.sp, fontWeight = FontWeight.Light)
+
+        Modifier.padding(18.dp)
+
+
+        LazyColumn(modifier = Modifier.padding(16.dp)) {
+            items(raceSum) { item ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    ItemDesign(item)
+                }
             }
         }
     }
+
+
+}
+
+fun unixTimeToHuman(unixTime: Long): String {
+    val date = java.util.Date(unixTime * 1000)
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+    return dateFormat.format(date)
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -128,29 +140,62 @@ fun getTimeRemaining(unixTime: Long): String {
     val remainingSeconds = unixTime - currentTime
 
     if (remainingSeconds <= 0) {
-        return "The specified time has already passed."
+        val elapsedSeconds = -remainingSeconds
+        val elapsedMinutes = elapsedSeconds / 60
+        return "$elapsedMinutes minutes ago."
     }
 
     val duration = Duration.ofSeconds(remainingSeconds)
-    val days = duration.toDays()
-    val hours = duration.toHours() % 24
-    val minutes = duration.toMinutes() % 60
-    val seconds = duration.seconds % 60
+    val hours: Int = (duration.toHours() % 24).toInt()
+    val minutes: Int = (duration.toMinutes() % 60).toInt()
 
-    return String.format(
-        "Time remaining: %d hours, %d minutes, %d seconds", hours, minutes, seconds
-    )
+    return if (hours == 0) {
+        String.format("Time left: %d min", minutes)
+    } else {
+        String.format("Time left: %d hrs, %d min", hours, minutes)
+    }
+
 }
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ItemDesign(race: Fff0c3eb64db493ce9dc65971714a) {
 
     Column {
-        Text(text = race.race_name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
 
-        val s = getTimeRemaining(race.advertised_start.seconds)
-        Text(text = s)
-        Spacer(modifier = Modifier.height(12.dp))
+        val raceName: String? = race.race_name
+        val meetingName: String = race.meeting_name
+        val raceNumber: String = race.race_number.toString()
+        val raceTime: Long = race.advertised_start.seconds
+        val remTime: String = getTimeRemaining(raceTime)
+
+        val isRemContainsAgo = remTime.contains("ago")
+
+
+
+        if (!isRemContainsAgo) {
+
+            if (!raceName.equals(null) || raceName != "") {
+
+                Text(
+                    text = "#$raceNumber $raceName!!",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                val s = getTimeRemaining(race.advertised_start.seconds)
+
+                Text(text = s)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = "Meeting Name: $meetingName")
+
+
+                Text(text = unixTimeToHuman(raceTime))
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+
     }
 }

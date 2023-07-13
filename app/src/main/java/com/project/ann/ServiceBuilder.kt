@@ -8,8 +8,6 @@ import java.util.concurrent.TimeUnit
 
 object ServiceBuilder {
 
-    //rest/v1/racing/?method=nextraces&count=10
-
     private var interceptor = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)
 
     private val okHttpClient = OkHttpClient().newBuilder().connectTimeout(60, TimeUnit.SECONDS)

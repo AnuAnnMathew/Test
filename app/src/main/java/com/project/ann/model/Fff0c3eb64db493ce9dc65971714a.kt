@@ -7,7 +7,7 @@ data class Fff0c3eb64db493ce9dc65971714a(
     val meeting_name: String,
     val race_form: RaceForm,
     val race_id: String,
-    val race_name: String,
+    val race_name: String?,
     val race_number: Int,
     val venue_country: String,
     val venue_id: String,
