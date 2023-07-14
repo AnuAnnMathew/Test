@@ -210,9 +210,16 @@ fun ShowListWithCheckboxesDialog(
 
                     filterColumn("Horse")
 
-//                    LazyListView(raceSum = )
-//                    HE HE
 
+//                    for (j in raceSum) {
+//
+//                if (j.category_id == "") {
+////                    LazyListView(raceSum = )
+//
+//                } else {
+////                    LazyListView(raceSum = )
+//                }
+//            }
 
                     Log.d(TAG, "ShowListWithCheckboxesDialog: Horse Selected")
                 } else {
@@ -223,15 +230,7 @@ fun ShowListWithCheckboxesDialog(
             }
 
 
-//            for (j in raceSum) {
 //
-//                if (j.category_id == "") {
-//
-//
-//                } else {
-//
-//                }
-//            }
 
 
             onDismiss()
