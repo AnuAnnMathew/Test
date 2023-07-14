@@ -7,18 +7,31 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -42,6 +55,7 @@ var raceSum: MutableList<Fff0c3eb64db493ce9dc65971714a> = mutableListOf()
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
 
         setContent {
             MaterialTheme {
@@ -89,7 +103,6 @@ class MainActivity : ComponentActivity() {
                             gson.fromJson(obj, Fff0c3eb64db493ce9dc65971714a::class.java)
                         raceSum.add(mMineUserEntity)
                     }
-
                 }
 
                 setContent {
@@ -111,7 +124,18 @@ fun GreetingPreview() {
 
     Column(modifier = Modifier.padding(16.dp)) {
 
-        Text(text = "Next to go Races", fontSize = 24.sp, fontWeight = FontWeight.Light)
+        Row(
+            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Next to go Races", fontSize = 24.sp, fontWeight = FontWeight.Light
+            )
+
+            MyScreen()
+
+
+        }
+
 
         Modifier.padding(18.dp)
 
@@ -125,8 +149,70 @@ fun GreetingPreview() {
         }
     }
 
-
 }
+
+@Composable
+fun MyScreen() {
+    val showDialog = remember { mutableStateOf(false) }
+
+    Icon(painter = painterResource(id = R.drawable.baseline_filter_alt_24),
+        contentDescription = null,
+        modifier = Modifier.clickable {
+            showDialog.value = true
+        })
+
+    if (showDialog.value) {
+        ShowListWithCheckboxesDialog(items = listOf("Horse", "Harness & Greyhound racing"),
+            onDismiss = { showDialog.value = false },
+            onItemsSelected = {
+                // Handle selected items
+                showDialog.value = false
+            })
+    }
+}
+
+@Composable
+fun ShowListWithCheckboxesDialog(
+    items: List<String>, onDismiss: () -> Unit, onItemsSelected: (List<String>) -> Unit
+) {
+    val selectedItems = remember { mutableStateListOf<String>() }
+    AlertDialog(onDismissRequest = onDismiss, title = { Text(text = "Select Items") }, text = {
+        Column {
+            items.forEach { item ->
+                Row(
+                    modifier = Modifier.padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(checked = selectedItems.contains(item),
+                        onCheckedChange = { isChecked ->
+                            if (isChecked) {
+                                selectedItems.add(item)
+                            } else {
+                                selectedItems.remove(item)
+                            }
+                        })
+                    Text(
+                        text = item, modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
+            }
+        }
+    }, confirmButton = {
+        Button(onClick = {
+
+            // Retrieve selected items and call onItemsSelected callback
+        }) {
+            Text(text = "Apply")
+        }
+    }, dismissButton = {
+        Button(
+            onClick = onDismiss
+        ) {
+            Text(text = "Cancel")
+        }
+    })
+}
+
 
 fun unixTimeToHuman(unixTime: Long): String {
     val date = java.util.Date(unixTime * 1000)
@@ -154,7 +240,6 @@ fun getTimeRemaining(unixTime: Long): String {
     } else {
         String.format("Time left: %d hrs, %d min", hours, minutes)
     }
-
 }
 
 
@@ -163,7 +248,6 @@ fun getTimeRemaining(unixTime: Long): String {
 fun ItemDesign(race: Fff0c3eb64db493ce9dc65971714a) {
 
     Column {
-
         val raceName: String? = race.race_name
         val meetingName: String = race.meeting_name
         val raceNumber: String = race.race_number.toString()
@@ -173,14 +257,16 @@ fun ItemDesign(race: Fff0c3eb64db493ce9dc65971714a) {
         val isRemContainsAgo = remTime.contains("ago")
 
 
+        //if 9daef0d7-bf3c-4f50-921d-8e818c60fe61 --> race hound
+        //else horse
 
         if (!isRemContainsAgo) {
 
             if (!raceName.equals(null) || raceName != "") {
 
                 Text(
-                    text = "#$raceNumber $raceName!!",
-                    fontSize = 20.sp,
+                    text = "#$raceNumber $meetingName",
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
 
@@ -188,7 +274,7 @@ fun ItemDesign(race: Fff0c3eb64db493ce9dc65971714a) {
 
                 Text(text = s)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "Meeting Name: $meetingName")
+//                Text(text = "Meeting Name: $meetingName")
 
 
                 Text(text = unixTimeToHuman(raceTime))
