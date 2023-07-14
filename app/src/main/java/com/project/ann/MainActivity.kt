@@ -74,6 +74,7 @@ class MainActivity : ComponentActivity() {
         val response = ServiceBuilder.buildService(RacingApiService::class.java)
 
         response.getNextRaces("nextraces", 10).enqueue(object : Callback<JsonObject> {
+            @RequiresApi(Build.VERSION_CODES.O)
             override fun onResponse(
                 call: Call<JsonObject>, response: Response<JsonObject>,
             ) {
@@ -118,39 +119,39 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
 
     Column(modifier = Modifier.padding(16.dp)) {
-
         Row(
             modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 text = "Next to go Races", fontSize = 24.sp, fontWeight = FontWeight.Light
             )
-
             MyScreen()
-
-
         }
-
 
         Modifier.padding(18.dp)
 
-
-        LazyColumn(modifier = Modifier.padding(16.dp)) {
-            items(raceSum) { item ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    ItemDesign(item)
-                }
-            }
-        }
+        LazyListView(raceSum)
     }
 
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun LazyListView(raceSum: MutableList<Fff0c3eb64db493ce9dc65971714a>) {
+    LazyColumn(modifier = Modifier.padding(8.dp)) {
+        items(raceSum) { item ->
+            ItemDesign(item)
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MyScreen() {
     val showDialog = remember { mutableStateOf(false) }
@@ -171,9 +172,10 @@ fun MyScreen() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ShowListWithCheckboxesDialog(
-    items: List<String>, onDismiss: () -> Unit, onItemsSelected: (List<String>) -> Unit
+    items: List<String>, onDismiss: () -> Unit, onItemsSelected: (List<String>) -> Unit,
 ) {
     val selectedItems = remember { mutableStateListOf<String>() }
     AlertDialog(onDismissRequest = onDismiss, title = { Text(text = "Select Items") }, text = {
@@ -199,8 +201,40 @@ fun ShowListWithCheckboxesDialog(
         }
     }, confirmButton = {
         Button(onClick = {
-
             // Retrieve selected items and call onItemsSelected callback
+
+
+            if (selectedItems.size == 1) {
+
+                if (selectedItems[0] == "Horse") {
+
+                    filterColumn("Horse")
+
+//                    LazyListView(raceSum = )
+//                    HE HE
+
+
+                    Log.d(TAG, "ShowListWithCheckboxesDialog: Horse Selected")
+                } else {
+                    filterColumn("Other")
+                    Log.d(TAG, "ShowListWithCheckboxesDialog: other Selected")
+                }
+
+            }
+
+
+//            for (j in raceSum) {
+//
+//                if (j.category_id == "") {
+//
+//
+//                } else {
+//
+//                }
+//            }
+
+
+            onDismiss()
         }) {
             Text(text = "Apply")
         }
@@ -211,6 +245,11 @@ fun ShowListWithCheckboxesDialog(
             Text(text = "Cancel")
         }
     })
+}
+
+fun filterColumn(s: String) {
+
+
 }
 
 
@@ -255,8 +294,6 @@ fun ItemDesign(race: Fff0c3eb64db493ce9dc65971714a) {
         val remTime: String = getTimeRemaining(raceTime)
 
         val isRemContainsAgo = remTime.contains("ago")
-
-
         //if 9daef0d7-bf3c-4f50-921d-8e818c60fe61 --> race hound
         //else horse
 
