@@ -53,6 +53,8 @@ var newList: MutableList<String> = mutableListOf()
 var raceSum: MutableList<Fff0c3eb64db493ce9dc65971714a> = mutableListOf()
 
 class MainActivity : ComponentActivity() {
+    var responseNEW: RacingApiService? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -69,9 +71,10 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun fetchData() {
+    fun fetchData() {
 
         val response = ServiceBuilder.buildService(RacingApiService::class.java)
+        responseNEW = response
 
         response.getNextRaces("nextraces", 10).enqueue(object : Callback<JsonObject> {
             @RequiresApi(Build.VERSION_CODES.O)
@@ -80,7 +83,6 @@ class MainActivity : ComponentActivity() {
             ) {
 
                 Log.d(TAG, "onResponse: " + response.body().toString())
-
                 val jsonObject = response.body()
                 val data: JsonObject? = jsonObject?.getAsJsonObject("data")
                 val nestedArray: JsonArray? = data?.getAsJsonArray("next_to_go_ids")
@@ -144,6 +146,8 @@ fun GreetingPreview() {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun LazyListView(raceSum: MutableList<Fff0c3eb64db493ce9dc65971714a>) {
+
+
     LazyColumn(modifier = Modifier.padding(8.dp)) {
         items(raceSum) { item ->
             ItemDesign(item)
@@ -208,22 +212,22 @@ fun ShowListWithCheckboxesDialog(
 
                 if (selectedItems[0] == "Horse") {
 
-                    filterColumn("Horse")
+                    for (x in raceSum) {
+                        val newList = mutableListOf<Fff0c3eb64db493ce9dc65971714a>()
+
+                        if (x.category_id == "") {
+
+                        } else {
+
+                        }
+
+                    }
 
 
-//                    for (j in raceSum) {
-//
-//                if (j.category_id == "") {
-////                    LazyListView(raceSum = )
-//
-//                } else {
-////                    LazyListView(raceSum = )
-//                }
-//            }
 
                     Log.d(TAG, "ShowListWithCheckboxesDialog: Horse Selected")
                 } else {
-                    filterColumn("Other")
+
                     Log.d(TAG, "ShowListWithCheckboxesDialog: other Selected")
                 }
 
@@ -244,11 +248,6 @@ fun ShowListWithCheckboxesDialog(
             Text(text = "Cancel")
         }
     })
-}
-
-fun filterColumn(s: String) {
-
-
 }
 
 
@@ -285,6 +284,8 @@ fun getTimeRemaining(unixTime: Long): String {
 @Composable
 fun ItemDesign(race: Fff0c3eb64db493ce9dc65971714a) {
 
+    var count = 0
+
     Column {
         val raceName: String? = race.race_name
         val meetingName: String = race.meeting_name
@@ -296,26 +297,29 @@ fun ItemDesign(race: Fff0c3eb64db493ce9dc65971714a) {
         //if 9daef0d7-bf3c-4f50-921d-8e818c60fe61 --> race hound
         //else horse
 
-        if (!isRemContainsAgo) {
+        if (count <= 5) {
+            if (!isRemContainsAgo) {
 
-            if (!raceName.equals(null) || raceName != "") {
+                if (!raceName.equals(null) || raceName != "") {
 
-                Text(
-                    text = "#$raceNumber $meetingName",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+                    Text(
+                        text = "#$raceNumber $meetingName",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
 
-                val s = getTimeRemaining(race.advertised_start.seconds)
+                    val s = getTimeRemaining(race.advertised_start.seconds)
 
-                Text(text = s)
-                Spacer(modifier = Modifier.height(4.dp))
+                    count++
+                    Text(text = s)
+                    Spacer(modifier = Modifier.height(4.dp))
 //                Text(text = "Meeting Name: $meetingName")
 
 
-                Text(text = unixTimeToHuman(raceTime))
+                    Text(text = unixTimeToHuman(raceTime))
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
         }
 

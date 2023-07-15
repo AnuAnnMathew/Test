@@ -71,5 +71,8 @@ dependencies {
     implementation 'com.squareup.okhttp3:logging-interceptor:3.4.1'
     implementation 'com.squareup.retrofit2:converter-gson:2.0.0-beta4'
     implementation 'com.google.code.gson:gson:2.8.2'
+// Add this dependency under the 'dependencies' section
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.9.1'
+    testImplementation 'org.mockito:mockito-core:3.12.4'
 
 }

@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit
 
 object ServiceBuilder {
 
+    var BASE_URL: String = "https://api.neds.com.au/"
     private var interceptor = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)
 
     private val okHttpClient = OkHttpClient().newBuilder().connectTimeout(60, TimeUnit.SECONDS)
@@ -15,7 +16,7 @@ object ServiceBuilder {
         .writeTimeout(60, TimeUnit.SECONDS).build();
 
     private val retrofit = Retrofit.Builder()
-        .baseUrl("https://api.neds.com.au/")
+        .baseUrl(BASE_URL)
         .addConverterFactory(GsonConverterFactory.create())
         .client(okHttpClient)
         .build()
