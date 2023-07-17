@@ -170,7 +170,11 @@ fun MyScreen() {
         })
 
     if (showDialog.value) {
-        ShowListWithCheckboxesDialog(items = listOf("Horse racing", "Harness racing","Greyhound racing"),
+        ShowListWithCheckboxesDialog(items = listOf(
+            "Horse racing",
+            "Harness racing",
+            "Greyhound racing"
+        ),
             onDismiss = { showDialog.value = false },
             onItemsSelected = {
                 // Handle selected items
@@ -211,35 +215,41 @@ fun ShowListWithCheckboxesDialog(
             // Retrieve selected items and call onItemsSelected callback
 
 
-            if (selectedItems.size == 1) {
-
-                if (selectedItems[0] == "Horse") {
-
-                    for (x in raceSum) {
-                        val newList = mutableListOf<Fff0c3eb64db493ce9dc65971714a>()
-
-                        if (x.category_id == "") {
-
-                        } else {
-
-                        }
-
-                    }
-
-
-
-                    Log.d(TAG, "ShowListWithCheckboxesDialog: Horse Selected")
-                } else {
-
-                    Log.d(TAG, "ShowListWithCheckboxesDialog: other Selected")
-                }
-
-            }
-
+//            if (selectedItems.size == 1) {
+//
+//                if (selectedItems[0] == "Horse") {
+//
+//                    for (x in raceSum) {
+//                        val newList = mutableListOf<Fff0c3eb64db493ce9dc65971714a>()
+//
+//                        if (x.category_id == "") {
+//
+//                        } else {
+//
+//                        }
+//
+//                    }
+//
+//
+//
+//                    Log.d(TAG, "ShowListWithCheckboxesDialog: Horse Selected")
+//                } else {
+//
+//                    Log.d(TAG, "ShowListWithCheckboxesDialog: other Selected")
+//                }
+//
+//            }
 
 //
-
-
+            val filteredItems = items.filter { item ->
+                when (item) {
+                    "Horse" -> selectedItems.contains(horse)
+                    "Greyhound" -> selectedItems.contains(greyhound)
+                    "Harness" -> selectedItems.contains(harness)
+                    else -> false
+                }
+            }
+            onItemsSelected(filteredItems)
             onDismiss()
         }) {
             Text(text = "Apply")
