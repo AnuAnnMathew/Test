@@ -129,13 +129,14 @@ fun GreetingPreview(raceList: List<Fff0c3eb64db493ce9dc65971714a>) {
     val selectedItems = remember { mutableStateListOf<String>() }
     val filteredRaceList = remember { mutableStateListOf<Fff0c3eb64db493ce9dc65971714a>() }
 
-    if (filteredRaceList.size <= 5) {
-        for (i in raceList) {
-            if (!filteredRaceList.contains(i)) {
+    for (i in raceList) {
+        if (!filteredRaceList.contains(i)) {
+            if (filteredRaceList.size <= 5) {
                 filteredRaceList.add(i)
             }
         }
     }
+
 
     Column(modifier = Modifier.padding(16.dp)) {
         Row(
@@ -144,7 +145,8 @@ fun GreetingPreview(raceList: List<Fff0c3eb64db493ce9dc65971714a>) {
             Text(
                 text = "Next to go Races", fontSize = 24.sp, fontWeight = FontWeight.Light
             )
-            MyScreen(showDialog = showDialog,
+            MyScreen(
+                showDialog = showDialog,
                 raceList = raceList,
                 onFilterApplied = { filteredList ->
 
@@ -238,8 +240,7 @@ fun ShowListWithCheckboxesDialog(
                     modifier = Modifier.padding(vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Checkbox(
-                        checked = selectedItems.contains(item),
+                    Checkbox(checked = selectedItems.contains(item),
                         onCheckedChange = { isChecked ->
                             if (isChecked) {
                                 selectedItems.add(item)
