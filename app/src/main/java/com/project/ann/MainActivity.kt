@@ -138,31 +138,31 @@ fun GreetingPreview(raceList: List<Fff0c3eb64db493ce9dc65971714a>) {
         }
     }
 
-
     Column(modifier = Modifier.padding(16.dp)) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Next to go Races",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Light
+                text = "Next to go Races", fontSize = 24.sp, fontWeight = FontWeight.Light
             )
-            MyScreen(
-                showDialog = showDialog,
+            MyScreen(showDialog = showDialog,
                 raceList = raceList,
                 onFilterApplied = { filteredList ->
 
                     filteredRaceList.clear()
 
-                    if (filteredRaceList.size <= 5)
-                        filteredRaceList.addAll(filteredList)
+                    if (filteredRaceList.size <= 5) {
+
+                        for (f in filteredList) {
+                            if (!filteredRaceList.contains(f)) {
+                                filteredRaceList.add(f)
+                            }
+                        }
+                    }
 
 
                     showDialog.value = false
-                }
-            )
+                })
         }
 
         Modifier.padding(18.dp)
@@ -179,6 +179,7 @@ fun GreetingPreview(raceList: List<Fff0c3eb64db493ce9dc65971714a>) {
     }
 }
 
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MyScreen(
@@ -194,37 +195,33 @@ fun MyScreen(
 
     if (showDialog.value) {
         ShowListWithCheckboxesDialog(items = listOf(
-            "Horse racing",
-            "Harness racing",
-            "Greyhound racing"
-        ),
-            onDismiss = { showDialog.value = false },
-            onItemsSelected = { selectedItems ->
-                val filteredList = mutableListOf<Fff0c3eb64db493ce9dc65971714a>()
-                if ("Horse racing" in selectedItems) {
-                    for (x in raceList) {
-                        if (x.category_id == horse) {
-                            filteredList.add(x)
-                        }
+            "Horse racing", "Harness racing", "Greyhound racing"
+        ), onDismiss = { showDialog.value = false }, onItemsSelected = { selectedItems ->
+            val filteredList = mutableListOf<Fff0c3eb64db493ce9dc65971714a>()
+            if ("Horse racing" in selectedItems) {
+                for (x in raceList) {
+                    if (x.category_id == horse) {
+                        filteredList.add(x)
                     }
                 }
-                if ("Greyhound racing" in selectedItems) {
-                    for (x in raceList) {
-                        if (x.category_id == greyhound) {
-                            filteredList.add(x)
-                        }
+            }
+            if ("Greyhound racing" in selectedItems) {
+                for (x in raceList) {
+                    if (x.category_id == greyhound) {
+                        filteredList.add(x)
                     }
                 }
-                if ("Harness racing" in selectedItems) {
-                    for (x in raceList) {
-                        if (x.category_id == harness) {
-                            filteredList.add(x)
-                        }
+            }
+            if ("Harness racing" in selectedItems) {
+                for (x in raceList) {
+                    if (x.category_id == harness) {
+                        filteredList.add(x)
                     }
                 }
+            }
 
-                onFilterApplied(filteredList)
-            })
+            onFilterApplied(filteredList)
+        })
     }
 }
 
@@ -242,7 +239,8 @@ fun ShowListWithCheckboxesDialog(
                     modifier = Modifier.padding(vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Checkbox(checked = selectedItems.contains(item),
+                    Checkbox(
+                        checked = selectedItems.contains(item),
                         onCheckedChange = { isChecked ->
                             if (isChecked) {
                                 selectedItems.add(item)
