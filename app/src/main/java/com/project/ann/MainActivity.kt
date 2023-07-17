@@ -26,6 +26,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +41,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.project.ann.model.Fff0c3eb64db493ce9dc65971714a
+import kotlinx.coroutines.delay
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -48,8 +51,6 @@ import java.time.Instant
 import java.util.Locale
 
 
-var race_id_list: MutableList<String> = mutableListOf()
-var raceList: MutableList<Fff0c3eb64db493ce9dc65971714a> = mutableStateListOf()
 var count = 1
 
 const val harness = "9daef0d7-bf3c-4f50-921d-8e818c60fe61"
@@ -66,23 +67,28 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
                     val raceList = remember { mutableStateListOf<Fff0c3eb64db493ce9dc65971714a>() }
-                    fetchData(raceList)
-                    GreetingPreview(raceList = raceList)
+
+                    LaunchedEffect(Unit) {
+                        while (true) {
+                            fetchData(raceList)
+
+                            delay(10000) // Delay for 5 seconds (adjust as needed)
+                        }
+                    }
+                    GreetingPreview(raceList)
                 }
             }
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun fetchData(raceList: MutableList<Fff0c3eb64db493ce9dc65971714a>) {
 
         val response = ServiceBuilder.buildService(RacingApiService::class.java)
 
-        response.getNextRaces("nextraces", 10).enqueue(object : Callback<JsonObject> {
+        response.getNextRaces("nextraces", 5).enqueue(object : Callback<JsonObject> {
 
             override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
                 val jsonObject = response.body()
@@ -119,6 +125,20 @@ class MainActivity : ComponentActivity() {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun GreetingPreview(raceList: List<Fff0c3eb64db493ce9dc65971714a>) {
+
+    val showDialog = remember { mutableStateOf(false) }
+    val selectedItems = remember { mutableStateListOf<String>() }
+    val filteredRaceList = remember { mutableStateListOf<Fff0c3eb64db493ce9dc65971714a>() }
+
+    if (filteredRaceList.size <= 5) {
+        for (i in raceList) {
+            if (!filteredRaceList.contains(i)) {
+                filteredRaceList.add(i)
+            }
+        }
+    }
+
+
     Column(modifier = Modifier.padding(16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -129,27 +149,44 @@ fun GreetingPreview(raceList: List<Fff0c3eb64db493ce9dc65971714a>) {
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Light
             )
-            MyScreen()
+            MyScreen(
+                showDialog = showDialog,
+                raceList = raceList,
+                onFilterApplied = { filteredList ->
+
+                    filteredRaceList.clear()
+
+                    if (filteredRaceList.size <= 5)
+                        filteredRaceList.addAll(filteredList)
+
+
+                    showDialog.value = false
+                }
+            )
         }
 
         Modifier.padding(18.dp)
 
-        LazyColumn(modifier = Modifier.padding(8.dp)) {
-            items(raceList) { item ->
-                ItemDesign(item)
+        if (!filteredRaceList.isEmpty()) {
+            LazyColumn(modifier = Modifier.padding(8.dp)) {
+                items(filteredRaceList) { item ->
+                    ItemDesign(item)
+                }
             }
+        } else {
+            Text(text = "No races available")
         }
     }
 }
 
-
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun MyScreen() {
-    val showDialog = remember { mutableStateOf(false) }
-
-    Icon(
-        painter = painterResource(id = R.drawable.baseline_filter_alt_24),
+fun MyScreen(
+    showDialog: MutableState<Boolean>,
+    onFilterApplied: (List<Fff0c3eb64db493ce9dc65971714a>) -> Unit,
+    raceList: List<Fff0c3eb64db493ce9dc65971714a>
+) {
+    Icon(painter = painterResource(id = R.drawable.baseline_filter_alt_24),
         contentDescription = null,
         modifier = Modifier.clickable {
             showDialog.value = true
@@ -157,18 +194,45 @@ fun MyScreen() {
 
     if (showDialog.value) {
         ShowListWithCheckboxesDialog(items = listOf(
-            "Horse racing", "Harness racing", "Greyhound racing"
-        ), onDismiss = { showDialog.value = false }, onItemsSelected = {
-            // Handle selected items
-            showDialog.value = false
-        })
+            "Horse racing",
+            "Harness racing",
+            "Greyhound racing"
+        ),
+            onDismiss = { showDialog.value = false },
+            onItemsSelected = { selectedItems ->
+                val filteredList = mutableListOf<Fff0c3eb64db493ce9dc65971714a>()
+                if ("Horse racing" in selectedItems) {
+                    for (x in raceList) {
+                        if (x.category_id == horse) {
+                            filteredList.add(x)
+                        }
+                    }
+                }
+                if ("Greyhound racing" in selectedItems) {
+                    for (x in raceList) {
+                        if (x.category_id == greyhound) {
+                            filteredList.add(x)
+                        }
+                    }
+                }
+                if ("Harness racing" in selectedItems) {
+                    for (x in raceList) {
+                        if (x.category_id == harness) {
+                            filteredList.add(x)
+                        }
+                    }
+                }
+
+                onFilterApplied(filteredList)
+            })
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ShowListWithCheckboxesDialog(
-    items: List<String>, onDismiss: () -> Unit, onItemsSelected: (List<String>) -> Unit,
+    items: List<String>,
+    onDismiss: () -> Unit,
+    onItemsSelected: (List<String>) -> Unit,
 ) {
     val selectedItems = remember { mutableStateListOf<String>() }
     AlertDialog(onDismissRequest = onDismiss, title = { Text(text = "Select Items") }, text = {
@@ -186,63 +250,22 @@ fun ShowListWithCheckboxesDialog(
                                 selectedItems.remove(item)
                             }
                         })
-                    Text(
-                        text = item, modifier = Modifier.padding(start = 8.dp)
-                    )
+                    Text(text = item, modifier = Modifier.padding(start = 8.dp))
                 }
             }
         }
-    },
-
-        confirmButton = {
-            val newList1 = mutableListOf<Fff0c3eb64db493ce9dc65971714a>()
-
-            Button(onClick = {
-
-                if (selectedItems.size > 0) {
-
-                    if ("Horse racing" in selectedItems) {
-                        for (x in raceList) {
-                            if (x.category_id == horse) {
-                                newList1.add(x)
-                            }
-                        }
-                    }
-                    if ("Greyhound racing" in selectedItems) {
-                        for (x in raceList) {
-                            if (x.category_id == greyhound) {
-                                newList1.add(x)
-                            }
-                        }
-                    }
-                    if ("Harness racing" in selectedItems) {
-                        for (x in raceList) {
-                            if (x.category_id == harness) {
-                                newList1.add(x)
-                            }
-                        }
-                    }
-                }
-
-                raceList = mutableStateListOf()
-                raceList.addAll(newList1)
-
-                onDismiss()
-
-                Log.d(TAG, "ShowListWithCheckboxesDialog: $raceList")
-
-            }) {
-                Text(text = "Apply")
-            }
-
-
-        }, dismissButton = {
-            Button(
-                onClick = onDismiss
-            ) {
-                Text(text = "Cancel")
-            }
-        })
+    }, confirmButton = {
+        Button(onClick = {
+            onItemsSelected(selectedItems)
+            onDismiss()
+        }) {
+            Text(text = "Apply")
+        }
+    }, dismissButton = {
+        Button(onClick = onDismiss) {
+            Text(text = "Cancel")
+        }
+    })
 }
 
 
@@ -288,27 +311,24 @@ fun ItemDesign(race: Fff0c3eb64db493ce9dc65971714a) {
 
         val isRemContainsAgo = remTime.contains("ago")
 
-        if (count <= 5) {
-            if (!isRemContainsAgo) {
+        if (!isRemContainsAgo) {
 
-                if (!raceName.equals(null) || raceName != "") {
+            if (!raceName.equals(null) || raceName != "") {
+                count++
 
-                    Text(
-                        text = "#$raceNumber $meetingName",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                Text(
+                    text = "#$raceNumber $meetingName",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
 
-                    val s = getTimeRemaining(race.advertised_start.seconds)
+                val s = getTimeRemaining(race.advertised_start.seconds)
 
-                    count++
-                    Text(text = s)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = unixTimeToHuman(raceTime))
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
+                Text(text = s)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = unixTimeToHuman(raceTime))
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
-
     }
 }
