@@ -74,7 +74,6 @@ class MainActivity : ComponentActivity() {
                     LaunchedEffect(Unit) {
                         while (true) {
                             fetchData(raceList)
-
                             delay(10000) // Delay for 5 seconds (adjust as needed)
                         }
                     }
@@ -88,7 +87,7 @@ class MainActivity : ComponentActivity() {
 
         val response = ServiceBuilder.buildService(RacingApiService::class.java)
 
-        response.getNextRaces("nextraces", 5).enqueue(object : Callback<JsonObject> {
+        response.getNextRaces("nextraces", 10).enqueue(object : Callback<JsonObject> {
 
             override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
                 val jsonObject = response.body()
