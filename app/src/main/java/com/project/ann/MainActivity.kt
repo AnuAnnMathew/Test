@@ -33,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.gson.Gson
@@ -49,73 +48,65 @@ import java.time.Instant
 import java.util.Locale
 
 
-var newList: MutableList<String> = mutableListOf()
-var raceSum: MutableList<Fff0c3eb64db493ce9dc65971714a> = mutableListOf()
+var race_id_list: MutableList<String> = mutableListOf()
+var raceList: MutableList<Fff0c3eb64db493ce9dc65971714a> = mutableStateListOf()
+var count = 1
 
 const val harness = "9daef0d7-bf3c-4f50-921d-8e818c60fe61"
 const val horse = "161d9be2-e909-4326-8c2c-35ed71fb460b"
 const val greyhound = "4a2788f8-e825-4d36-9894-efd4baf1cfae"
 
+@RequiresApi(Build.VERSION_CODES.O)
 class MainActivity : ComponentActivity() {
     var responseNEW: RacingApiService? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-
         setContent {
             MaterialTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
-                    modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
                 ) {
-                    fetchData()
+                    val raceList = remember { mutableStateListOf<Fff0c3eb64db493ce9dc65971714a>() }
+                    fetchData(raceList)
+                    GreetingPreview(raceList = raceList)
                 }
             }
         }
     }
 
-    fun fetchData() {
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun fetchData(raceList: MutableList<Fff0c3eb64db493ce9dc65971714a>) {
 
         val response = ServiceBuilder.buildService(RacingApiService::class.java)
-        responseNEW = response
 
         response.getNextRaces("nextraces", 10).enqueue(object : Callback<JsonObject> {
-            @RequiresApi(Build.VERSION_CODES.O)
-            override fun onResponse(
-                call: Call<JsonObject>, response: Response<JsonObject>,
-            ) {
 
-                Log.d(TAG, "onResponse: " + response.body().toString())
+            override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
                 val jsonObject = response.body()
                 val data: JsonObject? = jsonObject?.getAsJsonObject("data")
                 val nestedArray: JsonArray? = data?.getAsJsonArray("next_to_go_ids")
 
                 if (nestedArray != null) {
-                    newList = mutableListOf()
+                    val raceIdList = mutableListOf<String>()
                     for (jsonElement in nestedArray) {
-                        newList.add(jsonElement.asString)
+                        raceIdList.add(jsonElement.asString)
+                    }
+
+                    for (raceId in raceIdList) {
+                        val raceSummaries: JsonObject? = data.getAsJsonObject("race_summaries")
+                        val obj: JsonObject? = raceSummaries?.getAsJsonObject(raceId)
+
+                        if (obj != null) {
+                            val gson = Gson()
+                            val mMineUserEntity =
+                                gson.fromJson(obj, Fff0c3eb64db493ce9dc65971714a::class.java)
+                            raceList.add(mMineUserEntity)
+                        }
                     }
                 }
-
-                raceSum = mutableListOf()
-
-                for (race_id in newList) {
-                    val raceSummaries: JsonObject? = data?.getAsJsonObject("race_summaries")
-                    val obj: JsonObject? = raceSummaries?.getAsJsonObject(race_id)
-
-                    if (obj != null) {
-                        val gson = Gson()
-                        val mMineUserEntity =
-                            gson.fromJson(obj, Fff0c3eb64db493ce9dc65971714a::class.java)
-                        raceSum.add(mMineUserEntity)
-                    }
-                }
-
-                setContent {
-                    GreetingPreview()
-                }
-
             }
 
             override fun onFailure(call: Call<JsonObject>, t: Throwable) {
@@ -126,44 +117,39 @@ class MainActivity : ComponentActivity() {
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
-
+fun GreetingPreview(raceList: List<Fff0c3eb64db493ce9dc65971714a>) {
     Column(modifier = Modifier.padding(16.dp)) {
         Row(
-            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Next to go Races", fontSize = 24.sp, fontWeight = FontWeight.Light
+                text = "Next to go Races",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Light
             )
             MyScreen()
         }
 
         Modifier.padding(18.dp)
 
-        LazyListView(raceSum)
-    }
-
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
-@Composable
-fun LazyListView(raceSum: MutableList<Fff0c3eb64db493ce9dc65971714a>) {
-
-    LazyColumn(modifier = Modifier.padding(8.dp)) {
-        items(raceSum) { item ->
-            ItemDesign(item)
+        LazyColumn(modifier = Modifier.padding(8.dp)) {
+            items(raceList) { item ->
+                ItemDesign(item)
+            }
         }
     }
 }
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MyScreen() {
     val showDialog = remember { mutableStateOf(false) }
 
-    Icon(painter = painterResource(id = R.drawable.baseline_filter_alt_24),
+    Icon(
+        painter = painterResource(id = R.drawable.baseline_filter_alt_24),
         contentDescription = null,
         modifier = Modifier.clickable {
             showDialog.value = true
@@ -171,15 +157,11 @@ fun MyScreen() {
 
     if (showDialog.value) {
         ShowListWithCheckboxesDialog(items = listOf(
-            "Horse racing",
-            "Harness racing",
-            "Greyhound racing"
-        ),
-            onDismiss = { showDialog.value = false },
-            onItemsSelected = {
-                // Handle selected items
-                showDialog.value = false
-            })
+            "Horse racing", "Harness racing", "Greyhound racing"
+        ), onDismiss = { showDialog.value = false }, onItemsSelected = {
+            // Handle selected items
+            showDialog.value = false
+        })
     }
 }
 
@@ -210,57 +192,57 @@ fun ShowListWithCheckboxesDialog(
                 }
             }
         }
-    }, confirmButton = {
-        Button(onClick = {
-            // Retrieve selected items and call onItemsSelected callback
+    },
 
+        confirmButton = {
+            val newList1 = mutableListOf<Fff0c3eb64db493ce9dc65971714a>()
 
-//            if (selectedItems.size == 1) {
-//
-//                if (selectedItems[0] == "Horse") {
-//
-//                    for (x in raceSum) {
-//                        val newList = mutableListOf<Fff0c3eb64db493ce9dc65971714a>()
-//
-//                        if (x.category_id == "") {
-//
-//                        } else {
-//
-//                        }
-//
-//                    }
-//
-//
-//
-//                    Log.d(TAG, "ShowListWithCheckboxesDialog: Horse Selected")
-//                } else {
-//
-//                    Log.d(TAG, "ShowListWithCheckboxesDialog: other Selected")
-//                }
-//
-//            }
+            Button(onClick = {
 
-//
-            val filteredItems = items.filter { item ->
-                when (item) {
-                    "Horse" -> selectedItems.contains(horse)
-                    "Greyhound" -> selectedItems.contains(greyhound)
-                    "Harness" -> selectedItems.contains(harness)
-                    else -> false
+                if (selectedItems.size > 0) {
+
+                    if ("Horse racing" in selectedItems) {
+                        for (x in raceList) {
+                            if (x.category_id == horse) {
+                                newList1.add(x)
+                            }
+                        }
+                    }
+                    if ("Greyhound racing" in selectedItems) {
+                        for (x in raceList) {
+                            if (x.category_id == greyhound) {
+                                newList1.add(x)
+                            }
+                        }
+                    }
+                    if ("Harness racing" in selectedItems) {
+                        for (x in raceList) {
+                            if (x.category_id == harness) {
+                                newList1.add(x)
+                            }
+                        }
+                    }
                 }
+
+                raceList = mutableStateListOf()
+                raceList.addAll(newList1)
+
+                onDismiss()
+
+                Log.d(TAG, "ShowListWithCheckboxesDialog: $raceList")
+
+            }) {
+                Text(text = "Apply")
             }
-            onItemsSelected(filteredItems)
-            onDismiss()
-        }) {
-            Text(text = "Apply")
-        }
-    }, dismissButton = {
-        Button(
-            onClick = onDismiss
-        ) {
-            Text(text = "Cancel")
-        }
-    })
+
+
+        }, dismissButton = {
+            Button(
+                onClick = onDismiss
+            ) {
+                Text(text = "Cancel")
+            }
+        })
 }
 
 
@@ -297,8 +279,6 @@ fun getTimeRemaining(unixTime: Long): String {
 @Composable
 fun ItemDesign(race: Fff0c3eb64db493ce9dc65971714a) {
 
-    var count = 0
-
     Column {
         val raceName: String? = race.race_name
         val meetingName: String = race.meeting_name
@@ -307,8 +287,6 @@ fun ItemDesign(race: Fff0c3eb64db493ce9dc65971714a) {
         val remTime: String = getTimeRemaining(raceTime)
 
         val isRemContainsAgo = remTime.contains("ago")
-        //if 9daef0d7-bf3c-4f50-921d-8e818c60fe61 --> race hound
-        //else horse
 
         if (count <= 5) {
             if (!isRemContainsAgo) {
@@ -326,11 +304,7 @@ fun ItemDesign(race: Fff0c3eb64db493ce9dc65971714a) {
                     count++
                     Text(text = s)
                     Spacer(modifier = Modifier.height(4.dp))
-//                Text(text = "Meeting Name: $meetingName")
-
-
                     Text(text = unixTimeToHuman(raceTime))
-
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
