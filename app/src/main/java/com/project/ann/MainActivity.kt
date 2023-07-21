@@ -83,6 +83,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+
     private fun fetchData(raceList: MutableList<Fff0c3eb64db493ce9dc65971714a>) {
 
         val response = ServiceBuilder.buildService(RacingApiService::class.java)
@@ -131,8 +132,12 @@ fun GreetingPreview(raceList: List<Fff0c3eb64db493ce9dc65971714a>) {
 
     for (i in raceList) {
         if (!filteredRaceList.contains(i)) {
-            if (filteredRaceList.size <= 5) {
+
+            if (filteredRaceList.size < 5) {
                 filteredRaceList.add(i)
+            } else {
+                filteredRaceList.add(i)
+                filteredRaceList.removeFirst()
             }
         }
     }
@@ -151,9 +156,9 @@ fun GreetingPreview(raceList: List<Fff0c3eb64db493ce9dc65971714a>) {
                 onFilterApplied = { filteredList ->
 
                     filteredRaceList.clear()
+//                    filteredRaceList.addAll(filteredList)
 
-                    if (filteredRaceList.size <= 5) {
-
+                    if (filteredRaceList.size < 5) {
                         for (f in filteredList) {
                             if (!filteredRaceList.contains(f)) {
                                 filteredRaceList.add(f)
@@ -161,7 +166,10 @@ fun GreetingPreview(raceList: List<Fff0c3eb64db493ce9dc65971714a>) {
                         }
                     }
 
-
+                    Log.d(TAG, "updated: ${filteredList.size} items")
+                    Log.d(TAG, "updated: ${filteredRaceList.size} items")
+                    Log.d(TAG, "updated----------------------------------------")
+                    Log.d(TAG, "updated----------------------------------------")
                     showDialog.value = false
                 })
         }
@@ -186,7 +194,7 @@ fun GreetingPreview(raceList: List<Fff0c3eb64db493ce9dc65971714a>) {
 fun MyScreen(
     showDialog: MutableState<Boolean>,
     onFilterApplied: (List<Fff0c3eb64db493ce9dc65971714a>) -> Unit,
-    raceList: List<Fff0c3eb64db493ce9dc65971714a>
+    raceList: List<Fff0c3eb64db493ce9dc65971714a>,
 ) {
     Icon(painter = painterResource(id = R.drawable.baseline_filter_alt_24),
         contentDescription = null,
@@ -199,6 +207,8 @@ fun MyScreen(
             "Horse racing", "Harness racing", "Greyhound racing"
         ), onDismiss = { showDialog.value = false }, onItemsSelected = { selectedItems ->
             val filteredList = mutableListOf<Fff0c3eb64db493ce9dc65971714a>()
+
+            filteredList.clear()
             if ("Horse racing" in selectedItems) {
                 for (x in raceList) {
                     if (x.category_id == horse) {
@@ -220,8 +230,12 @@ fun MyScreen(
                     }
                 }
             }
-
-            onFilterApplied(filteredList)
+            if (filteredList.size <= 5)
+                onFilterApplied(filteredList)
+            else {
+                filteredList.removeLast()
+                onFilterApplied(filteredList)
+            }
         })
     }
 }
@@ -310,7 +324,6 @@ fun ItemDesign(race: Fff0c3eb64db493ce9dc65971714a) {
         val isRemContainsAgo = remTime.contains("ago")
 
         if (!isRemContainsAgo) {
-
             if (!raceName.equals(null) || raceName != "") {
                 count++
 
@@ -326,6 +339,25 @@ fun ItemDesign(race: Fff0c3eb64db493ce9dc65971714a) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(text = unixTimeToHuman(raceTime))
                 Spacer(modifier = Modifier.height(16.dp))
+            }
+        } else {
+            if (remTime.contains("1")) {
+                if (!raceName.equals(null) || raceName != "") {
+                    count++
+
+                    Text(
+                        text = "#$raceNumber $meetingName",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    val s = getTimeRemaining(race.advertised_start.seconds)
+
+                    Text(text = s)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(text = unixTimeToHuman(raceTime))
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
         }
     }
